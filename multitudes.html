@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multitudes</title>
+<style>
+  :root{
+    --ink: #1C1B1A;
+    --ink-card: #252320;
+    --ink-line: rgba(242,237,228,0.12);
+    --paper: #F2EDE4;
+    --paper-dim: #B8B3A8;
+    --coral: #E2654F;
+    --teal: #2E8C82;
+    --gold: #D9A441;
+    --violet: #8B6FC4;
+    --display: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif', serif;
+    --body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body.lang-tn{ font-family: 'Geeza Pro', 'Noto Sans Arabic', Tahoma, Arial, sans-serif; }
+  body.lang-tn .title, body.lang-tn .archetype-name, body.lang-tn .step-title{ font-weight: 700; }
+  body.lang-tn .eyebrow, body.lang-tn .mono-tag, body.lang-tn .q-counter,
+  body.lang-tn .hint, body.lang-tn .legend-item, body.lang-tn .tag,
+  body.lang-tn .roadmap-list li span, body.lang-tn .archetype-pct, body.lang-tn .lang-btn{
+    letter-spacing: normal;
+  }
+  body.lang-tn p, body.lang-tn label, body.lang-tn li{ line-height: 1.85; }
+
+  .wrap{ max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .lang-switch{ display:flex; justify-content:center; gap:0.4rem; margin-bottom: 1.5rem; }
+  .lang-btn{
+    font-family: var(--mono); font-size:0.72rem; letter-spacing:0.06em;
+    background:transparent; border:1px solid var(--ink-line); color:var(--paper-dim);
+    padding:0.35rem 0.85rem; border-radius:999px; cursor:pointer; transition: all .15s;
+  }
+  .lang-btn:hover{ color: var(--paper); border-color: var(--paper-dim); }
+  .lang-btn.active{ background: var(--paper); color: var(--ink); border-color: var(--paper); }
+
+  .site-header{ text-align:center; margin-bottom: 2.25rem; }
+  .eyebrow{
+    font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.14em;
+    color: var(--paper-dim); text-transform: uppercase; margin: 0 0 0.9rem;
+  }
+  .title{
+    font-family: var(--display); font-weight: 500;
+    font-size: clamp(2.4rem, 8vw, 3.4rem); margin: 0 0 0.5rem; letter-spacing: -0.01em;
+  }
+  .subtitle{ color: var(--paper-dim); font-size: 1.02rem; max-width: 30rem; margin: 0 auto; line-height: 1.5; }
+
+  .progress-track{ display:flex; height: 2px; background: var(--ink-line); border-radius: 2px; margin-bottom: 2.25rem; overflow: hidden; }
+  .progress-fill{ height: 100%; width: 0%; background: linear-gradient(90deg, var(--coral), var(--gold), var(--teal), var(--violet)); transition: width 0.45s ease; }
+
+  .step{ display:none; }
+  .step.active{ display:block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform: translateY(6px);} to{opacity:1; transform:none;} }
+
+  .card{ background: var(--ink-card); border: 1px solid var(--ink-line); border-radius: 16px; padding: 2rem 1.75rem; }
+
+  h2.step-title{ font-family: var(--display); font-weight: 500; font-size: 1.6rem; margin: 0 0 0.6rem; }
+  p.step-copy{ color: var(--paper-dim); line-height: 1.6; margin: 0 0 1.5rem; font-size: 0.98rem; }
+  .mono-tag{ font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-dim); margin-bottom: 0.6rem; display:block; }
+
+  .btn{ font-family: var(--body); font-weight: 600; font-size: 0.95rem; padding: 0.85rem 1.6rem; border-radius: 999px; border: none; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+  .btn:active{ transform: scale(0.98); }
+  .btn-primary{ background: var(--paper); color: var(--ink); }
+  .btn-primary:hover{ opacity: 0.88; }
+  .btn-ghost{ background: transparent; color: var(--paper-dim); border: 1px solid var(--ink-line); }
+  .btn-ghost:hover{ color: var(--paper); border-color: var(--paper-dim); }
+  .btn[disabled]{ opacity:0.4; cursor:not-allowed; }
+
+  .btn-row{ display:flex; justify-content: space-between; align-items:center; margin-top: 1.75rem; gap: 0.75rem; }
+  .btn-row.end{ justify-content: flex-end; }
+
+  .tag-input-row{ display:flex; gap:0.5rem; }
+  .tag-input-row input{ flex:1; background: var(--ink); border: 1px solid var(--ink-line); color: var(--paper); padding: 0.85rem 1rem; border-radius: 10px; font-family: var(--body); font-size: 0.98rem; }
+  .tag-input-row input:focus{ outline: 2px solid var(--gold); outline-offset: 1px; }
+  .tags{ display:flex; flex-wrap:wrap; gap:0.5rem; margin-top: 1.1rem; min-height: 2.2rem; }
+  .tag{ background: rgba(242,237,228,0.07); border: 1px solid var(--ink-line); padding: 0.4rem 0.5rem 0.4rem 0.85rem; border-radius: 999px; display:flex; align-items:center; gap:0.4rem; font-family: var(--mono); font-size: 0.82rem; }
+  .tag button{ background:none; border:none; color: var(--paper-dim); cursor:pointer; font-size: 1rem; line-height:1; padding: 0.1rem 0.3rem; }
+  .tag button:hover{ color: var(--coral); }
+  .hint{ font-family: var(--mono); font-size: 0.75rem; color: var(--paper-dim); margin-top: 0.9rem; }
+
+  .q-counter{ font-family: var(--mono); font-size: 0.75rem; color: var(--paper-dim); margin-bottom: 0.5rem; letter-spacing: 0.08em; }
+  .option-row{ display:flex; align-items:flex-start; gap: 0.85rem; padding: 0.95rem 1.1rem; border: 1px solid var(--ink-line); border-radius: 12px; cursor: pointer; margin-bottom: 0.6rem; transition: border-color 0.15s, background 0.15s; }
+  .option-row:hover{ border-color: rgba(242,237,228,0.35); }
+  .option-row.selected{ border-color: var(--paper); background: rgba(242,237,228,0.05); }
+  .option-row input{ margin-top: 0.2rem; accent-color: var(--gold); flex-shrink:0; }
+  .option-row label{ font-size: 0.96rem; line-height: 1.45; cursor: pointer; }
+  .shake{ animation: shake 0.35s; }
+  @keyframes shake{ 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+
+  .orb-wrap{ display:flex; justify-content:center; margin: 0.5rem 0 1.75rem; }
+  .orb{ width: 220px; height: 220px; border-radius: 50%; filter: blur(36px); opacity: 0.92; animation: spin 50s linear infinite; }
+  @media (prefers-reduced-motion: reduce){ .orb{ animation: none; } }
+  @keyframes spin{ from{ transform: rotate(0deg); } to{ transform: rotate(360deg); } }
+
+  .blend-bar{ display:flex; width:100%; height: 14px; border-radius: 999px; overflow:hidden; margin-bottom: 0.6rem; border: 1px solid var(--ink-line); }
+  .blend-legend{ display:flex; flex-wrap:wrap; gap: 0.9rem 1.3rem; margin-bottom: 1.75rem; }
+  .legend-item{ display:flex; align-items:center; gap: 0.45rem; font-family: var(--mono); font-size: 0.78rem; color: var(--paper-dim); }
+  .legend-dot{ width: 9px; height: 9px; border-radius: 50%; flex-shrink:0; }
+
+  .archetype-name{ font-family: var(--display); font-weight: 500; font-size: clamp(1.7rem, 6vw, 2.2rem); text-align:center; margin: 0 0 0.3rem; }
+  .archetype-pct{ text-align:center; font-family: var(--mono); font-size: 0.85rem; color: var(--paper-dim); margin-bottom: 1rem; }
+  .archetype-desc{ text-align:center; color: var(--paper-dim); line-height:1.6; max-width: 32rem; margin: 0 auto 1.2rem; }
+
+  .section-block{ margin-bottom: 1.75rem; }
+  .section-block h3{ font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--paper-dim); margin: 0 0 0.9rem; font-weight: 500; }
+  .idea-list, .roadmap-list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.6rem; }
+  .idea-list li, .roadmap-list li{ background: rgba(242,237,228,0.04); border: 1px solid var(--ink-line); border-radius: 10px; padding: 0.85rem 1rem; font-size: 0.94rem; line-height: 1.5; }
+  .roadmap-list li span{ font-family: var(--mono); font-size: 0.72rem; color: var(--paper-dim); display:block; margin-bottom:0.3rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .planb-box{ background: rgba(139,111,196,0.08); border: 1px solid rgba(139,111,196,0.35); border-radius: 10px; padding: 1rem 1.1rem; font-size: 0.94rem; line-height: 1.6; }
+  .warning-list{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:0.55rem; }
+  .warning-list li{ background: rgba(226,101,79,0.07); border: 1px solid rgba(226,101,79,0.3); border-radius: 10px; padding: 0.8rem 1rem; font-size: 0.92rem; line-height: 1.5; }
+
+  .checkin-list{ display:flex; flex-direction:column; gap:0.5rem; margin-bottom: 1rem; }
+  .checkin-item{ display:flex; align-items:flex-start; gap:0.75rem; padding: 0.7rem 0.9rem; border:1px solid var(--ink-line); border-radius: 10px; cursor:pointer; font-size: 0.92rem; line-height:1.45; }
+  .checkin-item:hover{ border-color: rgba(242,237,228,0.35); }
+  .checkin-item input{ margin-top:0.2rem; accent-color: var(--gold); flex-shrink:0; }
+  .checkin-readout{ padding: 0.9rem 1rem; border-radius: 10px; border:1px solid var(--ink-line); font-size: 0.92rem; line-height: 1.55; font-family: var(--mono); }
+  .checkin-readout.tier-low{ border-color: var(--teal); }
+  .checkin-readout.tier-mid{ border-color: var(--gold); }
+  .checkin-readout.tier-high{ border-color: var(--coral); }
+
+  .foot{ text-align:center; color: var(--paper-dim); font-size: 0.8rem; margin-top: 2.5rem; line-height:1.6; }
+
+  @media print{
+    .lang-switch, .progress-track, .foot, #restartBtn, #printBtn, #saveBtn { display:none !important; }
+    body{ background:#fff; color:#000; }
+    .card{ border:none; background:#fff; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="lang-switch" role="group" aria-label="Language">
+    <button class="lang-btn active" data-lang="en">EN</button>
+    <button class="lang-btn" data-lang="fr">FR</button>
+    <button class="lang-btn" data-lang="tn">TN</button>
+  </div>
+
+  <header class="site-header">
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 class="title" id="siteTitle">Multitudes</h1>
+    <p class="subtitle" id="subtitle"></p>
+  </header>
+
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+  <main id="stage">
+
+    <section class="step active" id="introStep">
+      <div class="card">
+        <span class="mono-tag" id="introTag"></span>
+        <h2 class="step-title" id="introTitle"></h2>
+        <p class="step-copy" id="introP1"></p>
+        <p class="step-copy" id="introP2" style="margin-bottom:0;"></p>
+        <div class="btn-row end">
+          <button class="btn btn-primary" id="startBtn"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" id="skillsStep">
+      <div class="card">
+        <span class="mono-tag" id="skillsTag"></span>
+        <h2 class="step-title" id="skillsTitle"></h2>
+        <p class="step-copy" id="skillsCopy"></p>
+        <div class="tag-input-row">
+          <input type="text" id="skillInput">
+          <button class="btn btn-primary" id="addSkillBtn"></button>
+        </div>
+        <div class="tags" id="tagContainer"></div>
+        <p class="hint" id="skillHint"></p>
+        <div class="btn-row">
+          <button class="btn btn-ghost" data-back id="skillsBackBtn"></button>
+          <button class="btn btn-primary" id="skillsNextBtn" disabled></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- quiz steps injected by JS -->
+
+    <section class="step" id="resultsStep">
+      <div class="card" id="resultsCard"></div>
+    </section>
+
+  </main>
+
+  <p class="foot" id="footerText"></p>
+
+</div>
+
+<script>
+  // ---------- translation content ----------
+  const ARCHETYPE_ORDER = ['groupHug','slash','einstein','phoenix'];
+  const ARCHETYPE_COLORS = { groupHug:'#E2654F', slash:'#2E8C82', einstein:'#D9A441', phoenix:'#8B6FC4' };
+
+  const QUESTION_SCORES = [
+    [ {groupHug:3}, {slash:3}, {einstein:3}, {phoenix:3} ],
+    [ {phoenix:2, einstein:1}, {slash:2}, {slash:2, groupHug:1}, {groupHug:2} ],
+    [ {einstein:3}, {slash:2}, {phoenix:2}, {groupHug:2} ],
+    [ {slash:3}, {einstein:2, phoenix:1}, {groupHug:2}, {phoenix:2} ],
+    [ {phoenix:2, einstein:1}, {groupHug:3}, {einstein:3}, {slash:3} ],
+    [ {phoenix:3}, {einstein:2}, {slash:2}, {groupHug:2} ],
+    [ {groupHug:2, slash:2}, {einstein:2}, {phoenix:2} ],
+    [ {einstein:3}, {slash:3}, {groupHug:3}, {phoenix:2} ],
+    [ {einstein:3}, {slash:2, phoenix:1}, {phoenix:3}, {groupHug:2} ],
+    [ {groupHug:3}, {slash:3}, {einstein:3}, {phoenix:3} ]
+  ];
+
+  const T = {
+    en: {
+      ui: {
+        eyebrow: "A pathfinder for people with too many interests",
+        title: "Multitudes",
+        subtitle: "Find the shape your work could take — and a plan to back it.",
+        introTag: "Before you begin",
+        introTitle: "You don't have to pick one thing.",
+        introP1: "If you've ever felt boxed in by \u201Cwhat do you do?\u201D — this is for you. Multitudes maps how someone with several skills and interests can actually structure their income around all of them, instead of squeezing into one job title. It's built around four shapes a multi-skilled working life tends to take. Few people are purely one — most are a blend.",
+        introP2: "Two steps: list what you know, then answer ten short questions. Takes about four minutes.",
+        introBegin: "Begin →",
+        skillsTag: "Step 1",
+        skillsTitle: "What do you know how to do?",
+        skillsCopy: "List the skills, crafts, subjects, or interests you could imagine building income around — professional or not. Type one and press Enter. Aim for at least three.",
+        skillsPlaceholder: "e.g. graphic design, then press Enter",
+        skillsAdd: "Add",
+        skillsHintEmpty: n => `${n} added — add at least 3 to continue`,
+        skillsHintReady: n => `${n} added — looking good`,
+        back: "← Back",
+        continueBtn: "Continue →",
+        qCounter: (qi, total) => `QUESTION ${qi+1} OF ${total}`,
+        shapeTag: "Your shape",
+        matchSuffix: "% match",
+        blendNote: name => `You lean almost as strongly toward <strong>${name}</strong> — worth reading that shape too as you plan.`,
+        ideasHeader: "Ideas, built from what you listed",
+        roadmapHeader: "Your first 90 days",
+        restart: "Start over",
+        print: "Print your plan",
+        saveBtn: "Save your plan",
+        planBHeader: "Plan B",
+        warningHeader: "Signs it might not be working",
+        checkinHeader: "Time to change hats? A quick check-in",
+        checkinIntro: "Check anything that's been true for a while — not just a bad week.",
+        checkinItems: [
+          "I've stopped learning anything new in this role for months.",
+          "I dread the work more often than I enjoy it.",
+          "My energy for it has dropped, even on otherwise good days.",
+          "I'm staying mainly out of fear of starting over, not because I still believe in it.",
+          "The reason I started this — financial, practical, or otherwise — stopped applying a while ago.",
+          "I think about a different direction more than I think about improving this one.",
+          "People close to me have noticed I seem different — drained, checked out — since this began.",
+          "If I were starting fresh today with what I know now, I wouldn't choose this."
+        ],
+        checkinCount: n => `${n} of 8 checked`,
+        checkinLow: "Sounds like a rough patch, not a verdict. Worth watching, not worth panicking over yet.",
+        checkinMid: "Enough here to take seriously. Not necessarily time to quit — but time for an honest check-in with yourself about what's changed.",
+        checkinHigh: "This is a strong signal. It might genuinely be time to consider changing hats — revisit your Plan B above.",
+        footer: "Inspired by the multipotentialite framework popularized by Emilie Wapnick.<br>Built for Mentalness."
+      },
+      archetypes: {
+        groupHug: { name:"The Group Hug", desc:"You don't want to choose between your skills — you want them fused into one thing. Your ideal work isn't a job title, it's a single offer that only makes sense because it combines everything you bring.",
+          planB:"If the combined offer isn't gaining traction within a reasonable window, don't abandon the skills — temporarily unbundle them. Sell the pieces separately for a while (closer to a Slash approach) while you keep refining what the combined version should actually look like. You can always re-merge once each piece has proven it has demand.",
+          warnings:[ "You keep saying yes to requests for just one piece of the offer, not the combination — and it's becoming most of your income.", "One of the core skills has quietly disappeared from the offer for months and nobody's mentioned it, including you.", "You feel like you're explaining what you do more than you're actually doing it." ] },
+        slash: { name:"The Slash", desc:"You hold several professional identities at once, and that's not a phase — it's your structure. Each skill earns its own keep, on its own track, together forming a portfolio rather than one career.",
+          planB:"If juggling every stream is draining you faster than any of them are paying off, don't quit all of them — consolidate. Pick the one or two streams with the clearest momentum and let the others go quiet for a season (closer to an Einstein approach), rather than spreading yourself thin across all of them indefinitely.",
+          warnings:[ "One stream has been propping up the others financially for a long stretch, with no sign the others are catching up.", "You're too drained from switching between streams to do good work in any single one.", "You've quietly stopped marketing two or more of your streams because you don't have the bandwidth — and haven't noticed until now." ] },
+        einstein: { name:"The Einstein", desc:"You want one reliable anchor — an income source that pays the bills without negotiation — so everything else you're curious about can stay free of financial pressure. Stability is what makes exploration possible.",
+          planB:"If your anchor becomes unstable — layoffs, burnout, a shrinking market — don't panic into a single new anchor right away. Lean on the side skills you've already been building and turn two or three of them into small parallel income streams (closer to a Slash approach) while you find solid ground again.",
+          warnings:[ "The protected hours for your side pursuit have vanished for two months or more.", "You resent the anchor job, but nothing has actually been built in the freed-up time it's supposed to be funding.", "Your side pursuit has been \u201Calmost ready to test\u201D for six months or longer." ] },
+        phoenix: { name:"The Phoenix", desc:"You go all the way in. You'll fully become one thing, then fully become the next — one chapter closing before another begins. That's not inconsistency. It's how you actually finish things.",
+          planB:"If full immersion in the current chapter isn't financially sustainable, you don't have to abandon it — just lighten the load. Take on one steady, low-effort source of income alongside it (closer to an Einstein approach) so the chapter can keep going without forcing a premature ending.",
+          warnings:[ "You're staying in this chapter out of guilt or sunk cost, not curiosity.", "You dread starting the workday more often than not.", "You're already mentally living in the next chapter, but won't admit this one is done." ] }
+      },
+      ideas: {
+        groupHug: (a,b) => `A ${a} × ${b} offer — something that wouldn't exist if you only did one of these.`,
+        groupHugEmpty: "Add a couple more skills above to see specific combination ideas here.",
+        slash: sk => `${sk} → its own track: freelance work, a paid workshop, or a small digital product, run independently of the rest.`,
+        einstein: list => [ `Of ${list} — which feels steadiest for income today? That one becomes your anchor.`, `Treat the rest as your lab: protected hours, no pressure for them to earn yet.`, `Write down the minimum monthly amount the anchor needs to cover — knowing that number removes a lot of decision anxiety later.` ],
+        phoenix: list => [ `Rank ${list} by what feels most alive right now — not most practical.`, `Whichever rises to the top is your current chapter. Give it your full attention before mixing in the next.`, `Tell one person about this chapter out loud. Saying it tends to make the commitment more real than just deciding privately.` ]
+      },
+      roadmaps: {
+        groupHug: [ ["30 days","List every skill you added, then circle the two or three you'd be happiest using every single week. Sketch one single offer that needs all of them at once."], ["60 days","Build the smallest version of that offer — one workshop, one product run, one client project. The goal isn't scale yet, it's proof the combination works."], ["90 days","Name the offer and put a price on it publicly. A combined offer needs a name people can refer it by — without one, you'll keep being asked what you actually do."], ["6 months","Revisit the name, the price, and who's actually buying. Drop or adjust whichever skill isn't pulling its weight in the offer, and look for a second combined offer hiding in what you've learned so far."] ],
+        slash: [ ["30 days","Treat each skill as its own micro-business. Write one sentence per skill: who pays for this, and how."], ["60 days","Pick the two streams most ready to earn now. Set up the minimum needed to take a paying client or sale — a simple offer, a rate, a way to be found."], ["90 days","Build a weekly rhythm that protects time for each stream. The risk here isn't lack of income — it's one stream quietly swallowing the others."], ["6 months","Review actual numbers per stream, not just energy. Cut or pause the stream that's costing more time than it's returning, and reinvest that time into your strongest one."] ],
+        einstein: [ ["30 days","Identify which skill is closest to stable, predictable income today. That's your anchor — not necessarily your favorite, just the steadiest."], ["60 days","Block fixed, non-negotiable hours each week for everything else, fully funded by the anchor. No pressure for it to earn yet."], ["90 days","Let one side pursuit get just professional enough for its first small paid test — without touching the anchor's hours or income."], ["6 months","Reassess whether the anchor is still the right one — or whether one of your side pursuits has grown stable enough to renegotiate the balance."] ],
+        phoenix: [ ["30 days","Rank your skills by what feels most alive right now. The top one is your current chapter."], ["60 days","Go all in on that one. Pause active investment in the others — they'll still be there. Depth beats balance right now."], ["90 days","Set a natural check-in point — not a deadline — to ask if this chapter still has more in it, or the next one is calling."], ["6 months","Take the check-in below honestly. If this chapter still feels alive, keep going without apology. If not, start scouting the next one before fully closing this door."] ]
+      },
+      questions: [
+        { text:"How do you feel about your various skills and interests?", options:[ "I want them combined into one project that uses all of them.", "I like having several separate pursuits running at once.", "I want one stable thing, with room to explore on the side.", "I like fully diving into one, then eventually moving to the next." ] },
+        { text:"How long do you typically stay engaged with one pursuit before wanting something new?", options:[ "Years — I go deep and stay.", "Months, then I want variety.", "I'm usually doing several things in parallel already.", "As long as it keeps blending with my other interests." ] },
+        { text:"What does financial stability mean to you right now?", options:[ "Essential — I need one reliable income source.", "Nice, but not required — I can handle some variability.", "I'd trade some stability for full immersion in what I love right now.", "I want my income itself to come from combining everything I love." ] },
+        { text:"How do you feel about juggling multiple income streams at once?", options:[ "Energizing — I thrive with variety.", "Draining — I'd rather have one focused thing.", "Fine, as long as they're all connected to one core identity.", "Depends entirely on the season of life I'm in." ] },
+        { text:"Picture your ideal workday. Is it...", options:[ "One deep project, uninterrupted.", "Several different skills woven together in the same work.", "Structured work, plus protected time for a passion project.", "Switching between different roles or clients through the day." ] },
+        { text:"When you imagine your career five years from now...", options:[ "It looks completely different — I'll have moved on by then.", "It's the same core thing, just deeper.", "It's still a mix of several things.", "It's one unified thing, built from combining what I do now." ] },
+        { text:"How important is having one clear professional 'label' or job title?", options:[ "Not important — I'm comfortable being hard to categorize.", "Somewhat — I'd like at least one clear anchor.", "Important — I prefer one clear identity at a time, even if it changes over the years." ] },
+        { text:"How do you currently fund your passion projects or side interests?", options:[ "A day job covers it; side projects are unpaid for now.", "Each interest pays for itself, separately.", "They're not separate — they're all part of one paid offering.", "I commit financially to whatever I'm doing right now, fully." ] },
+        { text:"How do you feel about uncertainty in income?", options:[ "Low tolerance — I want predictability.", "Medium — some swings are fine if I enjoy the work.", "High — I'll figure it out as I go.", "Doesn't really apply — my combined offer creates its own stability." ] },
+        { text:"Which sounds most like you?", options:[ "\u201CI want to build one thing that uses everything I am.\u201D", "\u201CI want a portfolio career — several hats, all at once.\u201D", "\u201CI want security first, freedom on the side.\u201D", "\u201CI want to fully become each thing, one at a time.\u201D" ] }
+      ]
+    },
+
+    fr: {
+      ui: {
+        eyebrow: "Un guide pour celles et ceux qui ont trop de centres d'intérêt",
+        title: "Multitudes",
+        subtitle: "Découvrez la forme que pourrait prendre votre travail — et un plan pour la concrétiser.",
+        introTag: "Avant de commencer",
+        introTitle: "Vous n'avez pas à choisir une seule chose.",
+        introP1: "Si la question « tu fais quoi dans la vie ? » vous a déjà mis·e mal à l'aise, ceci est pour vous. Multitudes montre comment une personne aux compétences multiples peut structurer ses revenus autour de tout ce qu'elle sait faire, au lieu de se réduire à un seul intitulé de poste. L'outil s'organise autour de quatre profils qu'une vie professionnelle multi-compétences tend à prendre. Peu de gens correspondent à un seul profil — la plupart sont un mélange.",
+        introP2: "Deux étapes : listez ce que vous savez faire, puis répondez à dix courtes questions. Environ quatre minutes.",
+        introBegin: "Commencer →",
+        skillsTag: "Étape 1",
+        skillsTitle: "Que savez-vous faire ?",
+        skillsCopy: "Listez les compétences, savoir-faire, sujets ou centres d'intérêt autour desquels vous pourriez imaginer construire un revenu — professionnels ou non. Tapez-en un puis appuyez sur Entrée. Visez au moins trois.",
+        skillsPlaceholder: "ex. design graphique, puis Entrée",
+        skillsAdd: "Ajouter",
+        skillsHintEmpty: n => `${n} ajouté(s) — ajoutez-en au moins 3 pour continuer`,
+        skillsHintReady: n => `${n} ajouté(s) — c'est bien parti`,
+        back: "← Retour",
+        continueBtn: "Continuer →",
+        qCounter: (qi, total) => `QUESTION ${qi+1} SUR ${total}`,
+        shapeTag: "Votre forme",
+        matchSuffix: "% de correspondance",
+        blendNote: name => `Vous penchez presque aussi fortement vers <strong>${name}</strong> — cela vaut la peine de lire aussi ce profil pour planifier.`,
+        ideasHeader: "Des idées, construites à partir de votre liste",
+        roadmapHeader: "Vos 90 premiers jours",
+        restart: "Recommencer",
+        print: "Imprimer votre plan",
+        saveBtn: "Enregistrer votre plan",
+        planBHeader: "Plan B",
+        warningHeader: "Signes que ça ne fonctionne peut-être pas",
+        checkinHeader: "L'heure de changer de casquette ? Un point rapide",
+        checkinIntro: "Cochez ce qui est vrai depuis un moment — pas juste une mauvaise semaine.",
+        checkinItems: [
+          "Je n'ai plus rien appris de nouveau dans ce rôle depuis des mois.",
+          "Je redoute ce travail plus souvent que je ne l'apprécie.",
+          "Mon énergie pour ça a baissé, même les jours autrement bons.",
+          "Je reste surtout par peur de tout recommencer, pas parce que j'y crois encore.",
+          "La raison pour laquelle j'ai commencé — financière, pratique ou autre — ne s'applique plus depuis un moment.",
+          "Je pense plus souvent à une autre direction qu'à améliorer celle-ci.",
+          "Des proches ont remarqué que je semble différent·e — épuisé·e, désengagé·e — depuis que ça a commencé.",
+          "Si je recommençais aujourd'hui avec ce que je sais maintenant, je ne choisirais pas ça."
+        ],
+        checkinCount: n => `${n} sur 8 cochés`,
+        checkinLow: "On dirait une mauvaise période, pas un verdict. À surveiller, pas de quoi paniquer pour l'instant.",
+        checkinMid: "Il y a assez ici pour le prendre au sérieux. Pas nécessairement l'heure de tout arrêter — mais l'heure d'un vrai point avec vous-même sur ce qui a changé.",
+        checkinHigh: "C'est un signal fort. C'est peut-être vraiment le moment d'envisager de changer de casquette — relisez votre Plan B ci-dessus.",
+        footer: "Inspiré du concept de multipotentialité popularisé par Emilie Wapnick.<br>Conçu pour Mentalness."
+      },
+      archetypes: {
+        groupHug: { name:"Le Tout-en-Un", desc:"Vous ne voulez pas choisir entre vos compétences — vous voulez les fusionner en une seule chose. Votre travail idéal n'est pas un intitulé de poste, c'est une offre unique qui n'a de sens que parce qu'elle combine tout ce que vous apportez.",
+          planB:"Si l'offre combinée ne décolle pas dans un délai raisonnable, n'abandonnez pas les compétences — déliez-les temporairement. Vendez les éléments séparément pendant un temps (plus proche d'une approche Multi-Casquettes) tout en continuant à affiner ce que la version combinée devrait vraiment être. Vous pourrez toujours les refusionner une fois la demande prouvée pour chaque élément.",
+          warnings:[ "Vous acceptez de plus en plus des demandes pour un seul élément de l'offre, pas la combinaison — et ça devient la majorité de vos revenus.", "Une des compétences centrales a discrètement disparu de l'offre depuis des mois, et personne ne l'a remarqué, vous y compris.", "Vous avez l'impression d'expliquer ce que vous faites plus que de le faire réellement." ] },
+        slash: { name:"Le Multi-Casquettes", desc:"Vous portez plusieurs identités professionnelles à la fois, et ce n'est pas une phase — c'est votre structure. Chaque compétence gagne sa vie sur sa propre voie, formant ensemble un portfolio plutôt qu'une seule carrière.",
+          planB:"Si jongler avec chaque activité vous épuise plus vite qu'elles ne rapportent, n'abandonnez pas tout — consolidez. Choisissez la ou les deux activités avec la dynamique la plus claire et laissez les autres en sommeil pour une saison (plus proche d'une approche Einstein), plutôt que de vous disperser indéfiniment sur toutes.",
+          warnings:[ "Une activité soutient financièrement les autres depuis longtemps, sans signe que les autres rattrapent leur retard.", "Vous êtes trop épuisé·e par le passage d'une activité à l'autre pour bien faire le travail dans l'une d'elles.", "Vous avez discrètement arrêté de promouvoir deux activités ou plus par manque de temps — et vous ne vous en êtes rendu compte que maintenant." ] },
+        einstein: { name:"L'Einstein", desc:"Vous voulez un point d'ancrage fiable — une source de revenu qui paie les factures sans négociation — pour que tout ce qui vous intrigue par ailleurs reste libre de pression financière. La stabilité est ce qui rend l'exploration possible.",
+          planB:"Si votre ancrage devient instable — licenciement, épuisement, marché qui se réduit — ne vous précipitez pas vers un nouvel ancrage unique. Appuyez-vous sur les compétences secondaires déjà développées et transformez-en deux ou trois en petites sources de revenus parallèles (plus proche d'une approche Multi-Casquettes) le temps de retrouver un terrain stable.",
+          warnings:[ "Les heures protégées pour votre projet secondaire ont disparu depuis deux mois ou plus.", "Vous en voulez à votre emploi d'ancrage, mais rien n'a vraiment été construit pendant le temps libéré qu'il est censé financer.", "Votre projet secondaire est « presque prêt à tester » depuis six mois ou plus." ] },
+        phoenix: { name:"Le Phénix", desc:"Vous y allez à fond. Vous devenez pleinement une chose, puis pleinement la suivante — un chapitre se referme avant qu'un autre ne commence. Ce n'est pas de l'inconstance. C'est ainsi que vous menez réellement les choses à terme.",
+          planB:"Si l'immersion totale dans le chapitre actuel n'est pas tenable financièrement, vous n'êtes pas obligé·e de l'abandonner — allégez simplement la charge. Ajoutez une source de revenu stable et peu exigeante en parallèle (plus proche d'une approche Einstein) pour que le chapitre puisse continuer sans se terminer prématurément.",
+          warnings:[ "Vous restez dans ce chapitre par culpabilité ou par investissement passé, pas par curiosité.", "Vous redoutez le plus souvent de commencer votre journée de travail.", "Vous vivez déjà mentalement dans le chapitre suivant, mais refusez d'admettre que celui-ci est terminé." ] }
+      },
+      ideas: {
+        groupHug: (a,b) => `Une offre ${a} × ${b} — quelque chose qui n'existerait pas si vous ne faisiez que l'une des deux.`,
+        groupHugEmpty: "Ajoutez encore quelques compétences ci-dessus pour voir des idées de combinaisons précises ici.",
+        slash: sk => `${sk} → sa propre voie : travail en freelance, atelier payant, ou petit produit numérique, géré indépendamment du reste.`,
+        einstein: list => [ `Parmi ${list} — laquelle semble la plus stable comme revenu aujourd'hui ? C'est celle-ci qui devient votre ancrage.`, `Traitez le reste comme votre laboratoire : des heures protégées, sans pression pour qu'elles rapportent tout de suite.`, `Notez le montant mensuel minimum que l'ancrage doit couvrir — connaître ce chiffre enlève beaucoup d'anxiété décisionnelle plus tard.` ],
+        phoenix: list => [ `Classez ${list} selon ce qui vous semble le plus vivant en ce moment — pas le plus pratique.`, `Celle qui arrive en tête est votre chapitre actuel. Donnez-lui toute votre attention avant d'y mêler la suivante.`, `Parlez de ce chapitre à voix haute à quelqu'un. Le dire rend généralement l'engagement plus réel que de simplement le décider en privé.` ]
+      },
+      roadmaps: {
+        groupHug: [ ["30 jours","Listez toutes les compétences que vous avez ajoutées, puis entourez les deux ou trois que vous seriez le plus heureux·se d'utiliser chaque semaine. Esquissez une offre unique qui les nécessite toutes à la fois."], ["60 jours","Construisez la plus petite version possible de cette offre — un atelier, une série de produits, un projet client. L'objectif n'est pas encore l'échelle, c'est de prouver que la combinaison fonctionne."], ["90 jours","Nommez l'offre et fixez-lui un prix publiquement. Une offre combinée a besoin d'un nom auquel les gens peuvent se référer — sans cela, on continuera à vous demander ce que vous faites réellement."], ["6 mois","Reconsidérez le nom, le prix, et qui achète réellement. Ajustez ou retirez la compétence qui ne tire pas son poids dans l'offre, et cherchez une deuxième offre combinée qui se cache dans ce que vous avez appris jusqu'ici."] ],
+        slash: [ ["30 jours","Traitez chaque compétence comme sa propre micro-entreprise. Écrivez une phrase par compétence : qui paie pour ça, et comment."], ["60 jours","Choisissez les deux activités les plus prêtes à générer un revenu maintenant. Mettez en place le minimum nécessaire pour accepter un client ou une vente payante — une offre simple, un tarif, un moyen d'être trouvé·e."], ["90 jours","Construisez un rythme hebdomadaire qui protège du temps pour chaque activité. Le risque ici n'est pas le manque de revenu — c'est qu'une activité finisse par engloutir les autres."], ["6 mois","Examinez les chiffres réels par activité, pas seulement votre énergie. Coupez ou mettez en pause celle qui coûte plus de temps qu'elle ne rapporte, et réinvestissez ce temps dans la plus forte."] ],
+        einstein: [ ["30 jours","Identifiez quelle compétence est la plus proche d'un revenu stable et prévisible aujourd'hui. C'est votre ancrage — pas forcément votre préférée, juste la plus stable."], ["60 jours","Bloquez des heures fixes et non négociables chaque semaine pour tout le reste, entièrement financées par l'ancrage. Aucune pression pour que ça rapporte déjà."], ["90 jours","Laissez une activité secondaire devenir juste assez professionnelle pour son premier petit test payant — sans toucher aux heures ni au revenu de l'ancrage."], ["6 mois","Réévaluez si l'ancrage est toujours le bon — ou si l'un de vos projets secondaires est devenu assez stable pour renégocier l'équilibre."] ],
+        phoenix: [ ["30 jours","Classez vos compétences selon ce qui vous semble le plus vivant en ce moment. La première est votre chapitre actuel."], ["60 jours","Investissez-vous à fond dans celle-là. Mettez en pause l'investissement actif dans les autres — elles seront toujours là. La profondeur prime sur l'équilibre en ce moment."], ["90 jours","Fixez un point de contrôle naturel — pas une échéance — pour vérifier si ce chapitre a encore quelque chose à offrir, ou si le suivant vous appelle déjà."], ["6 mois","Faites le point ci-dessous honnêtement. Si ce chapitre vous semble toujours vivant, continuez sans vous excuser. Sinon, commencez à repérer le suivant avant de fermer complètement cette porte."] ]
+      },
+      questions: [
+        { text:"Comment vivez-vous vos différentes compétences et centres d'intérêt ?", options:[ "Je veux les combiner dans un seul projet qui les utilise tous.", "J'aime avoir plusieurs activités séparées en parallèle.", "Je veux une chose stable, avec de la place pour explorer à côté.", "J'aime me plonger pleinement dans une chose, puis passer à la suivante." ] },
+        { text:"Combien de temps restez-vous généralement engagé·e dans une activité avant d'avoir envie de changer ?", options:[ "Des années — je vais au fond des choses et je reste.", "Quelques mois, puis j'ai besoin de variété.", "Je fais déjà plusieurs choses en parallèle, en général.", "Tant que ça continue à se mélanger avec mes autres centres d'intérêt." ] },
+        { text:"Que représente la stabilité financière pour vous en ce moment ?", options:[ "Essentielle — j'ai besoin d'une source de revenu fiable.", "Appréciable, mais pas indispensable — je peux gérer une certaine variabilité.", "Je sacrifierais un peu de stabilité pour me plonger pleinement dans ce que j'aime maintenant.", "Je veux que mon revenu vienne justement de la combinaison de tout ce que j'aime." ] },
+        { text:"Que pensez-vous de jongler avec plusieurs sources de revenus à la fois ?", options:[ "Ça me dynamise — j'aime la variété.", "Ça m'épuise — je préfère me concentrer sur une seule chose.", "Ça va, tant qu'elles sont toutes reliées à une même identité centrale.", "Ça dépend totalement de la période de vie dans laquelle je suis." ] },
+        { text:"Imaginez votre journée de travail idéale. Est-ce que c'est...", options:[ "Un seul projet en profondeur, sans interruption.", "Plusieurs compétences différentes mêlées dans le même travail.", "Un travail structuré, avec du temps protégé pour un projet passion.", "Passer d'un rôle ou d'un client à l'autre tout au long de la journée." ] },
+        { text:"Quand vous imaginez votre carrière dans cinq ans...", options:[ "Elle est complètement différente — j'aurai évolué entre-temps.", "C'est la même base, juste approfondie.", "C'est toujours un mélange de plusieurs choses.", "C'est une chose unifiée, construite à partir de ce que je fais aujourd'hui." ] },
+        { text:"Quelle importance accordez-vous à avoir un seul « titre » professionnel clair ?", options:[ "Pas important — ça ne me dérange pas d'être difficile à classer.", "Un peu — j'aimerais au moins un point d'ancrage clair.", "Important — je préfère une identité claire à la fois, même si elle change au fil des années." ] },
+        { text:"Comment financez-vous actuellement vos projets passion ou centres d'intérêt secondaires ?", options:[ "Un emploi principal couvre tout ; les projets annexes ne sont pas encore rémunérés.", "Chaque centre d'intérêt se finance lui-même, séparément.", "Ils ne sont pas séparés — ils font tous partie d'une seule offre payante.", "Je m'investis financièrement à fond dans ce que je fais en ce moment." ] },
+        { text:"Comment gérez-vous l'incertitude des revenus ?", options:[ "Peu tolérant·e — je veux de la prévisibilité.", "Moyennement — quelques variations ne me dérangent pas si j'aime le travail.", "Bien — je trouverai des solutions en avançant.", "Pas vraiment applicable — mon offre combinée crée sa propre stabilité." ] },
+        { text:"Laquelle de ces phrases vous ressemble le plus ?", options:[ "« Je veux construire une chose qui utilise tout ce que je suis. »", "« Je veux une carrière portfolio — plusieurs casquettes, toutes à la fois. »", "« Je veux la sécurité d'abord, la liberté à côté. »", "« Je veux devenir pleinement chaque chose, une à la fois. »" ] }
+      ]
+    },
+
+    tn: {
+      ui: {
+        eyebrow: "دليل لكل لي عندو برشا حاجات يحب يعملهم",
+        title: "Multitudes",
+        subtitle: "اكتشف الشكل لي يمكن تاخذو خدمتك — وبلان باش تحققو.",
+        introTag: "قبل ما تبدا",
+        introTitle: "موش لازم تختار حاجة وحدة.",
+        introP1: "إذا مرة حسّيت بالضيقة كي يسألوك \u201Cشنوة تخدم؟\u201D — هاذا الموقع ليك. Multitudes يوريك كيفاش واحد عندو برشا مهارات يقدر يبني منهم مدخول، بلاش يحبس روحو في تسمية وحدة. الموقع مبني على أربعة أشكال لي تتكرر عند الناس لي عندهم برشا مهارات. شوية مننا يكون شكل وحيد بالكل — أغلبنا خليط.",
+        introP2: "خطوتين بسيطة: أكتب المهارات لي عندك، وبعد جاوب على عشرة أسئلة قصيرة. تقريبا أربعة دقايق.",
+        introBegin: "ابدا ←",
+        skillsTag: "خطوة 1",
+        skillsTitle: "شنوة تعرف تعمل؟",
+        skillsCopy: "أكتب المهارات، الحرف، المواضيع، ولا الحاجات لي تحب فيهم وتقدر تبني منهم مدخول — سواء كانت مهنية ولا لا. أكتب وحدة واضغط Enter. حاول توصل لثلاثة على الأقل.",
+        skillsPlaceholder: "مثال: تصميم غرافيك، بعدها Enter",
+        skillsAdd: "زيد",
+        skillsHintEmpty: n => `${n} مزودين — زيد على الأقل 3 باش تكمل`,
+        skillsHintReady: n => `${n} مزودين — برافو`,
+        back: "→ لور",
+        continueBtn: "← كمّل",
+        qCounter: (qi, total) => `سؤال ${qi+1} من ${total}`,
+        shapeTag: "الشكل متاعك",
+        matchSuffix: "% تطابق",
+        blendNote: name => `تميل بقوة تقريبا لـ <strong>${name}</strong> زادة — يستاهل تقرا هاذا الشكل زادة وقتلي تخطط.`,
+        ideasHeader: "أفكار، مبنية على لي كتبتو",
+        roadmapHeader: "أول 90 يوم متاعك",
+        restart: "ابدا مرة أخرى",
+        print: "اطبع البلان متاعك",
+        saveBtn: "إحفظ البلان متاعك",
+        planBHeader: "بلان ب",
+        warningHeader: "علامات إنو يمكن موش ماشي",
+        checkinHeader: "وقت تبدل الدور؟ تشيك سريع",
+        checkinIntro: "أعلم على لي صحيح من مدة — موش غير جمعة خايبة.",
+        checkinItems: [
+          "ما عدتش نتعلم حاجة جديدة في هاذا الدور من أشهر.",
+          "نخاف من الخدمة أكثر ما نحبها.",
+          "الطاقة متاعي تجاهها نقصت، حتى في الأيام الباهية.",
+          "نقعد بالأساس خوفا من نبدا من جديد، موش لأني مازلت نومن فيها.",
+          "السبب لي بديت بيه — مادي، عملي، ولا غيرو — ما عادش موجود من مدة.",
+          "نفكر في اتجاه آخر أكثر ما نفكر كيفاش نحسن هاذا.",
+          "الناس القريبين مني لاحظوا إني تبدلت — متعب، بعيد — من كي بديت هاذا.",
+          "لو بديت اليوم بلي نعرفو توة، ما كنتش نختار هاذا."
+        ],
+        checkinCount: n => `${n} من 8 معلمين`,
+        checkinLow: "تبان مرحلة صعيبة، موش حكم نهائي. يستاهل المتابعة، ماهوش وقت الذعر توة.",
+        checkinMid: "فما كفاية باش تاخذها بجدية. موش بالضرورة وقت توقف — ولكن وقت تشيك صادق مع روحك على شنوة تبدل.",
+        checkinHigh: "هاذي إشارة قوية. يمكن فعلا وقت تبدل الدور — رجع اقرا الـPlan B فوق.",
+        footer: "مستوحى من فكرة \u201Cmultipotentialite\u201D لي عرّفتها Emilie Wapnick.<br>متعمل لـ Mentalness."
+      },
+      archetypes: {
+        groupHug: { name:"الكل في وحدة", desc:"ما تحبش تختار بين المهارات متاعك — تحب تجمعهم في حاجة وحدة. الخدمة المثالية بالنسبة ليك موش تسمية وظيفة، هي عرض وحيد ما عندوش معنى إلا إذا جمع كل لي عندك.",
+          planB:"إذا العرض المجمع ما طلعش في وقت معقول، ما تتخلاش على المهارات — فكهم وقتيا. بيع كل جزء لوحدو لمدة (تولي قريب لمتعدد الأدوار) وفي نفس الوقت كمل تحسن في شكل العرض المجمع. تقدر دائما تربطهم مرة أخرى كي كل جزء يثبت إنو فيه طلب.",
+          warnings:[ "تقبل أكثر فأكثر طلبات على جزء وحيد من العرض، موش الدمج — وولات تكون أغلب مدخولك.", "وحدة من المهارات الأساسية اختفت من العرض من أشهر وحتى حتى ما لاحظ، حتى انت.", "تحس روحك تشرح شنوة تخدم أكثر ما تخدمو فعلا." ] },
+        slash: { name:"متعدد الأدوار", desc:"عندك عدة هويات مهنية في نفس الوقت، وهاذي موش مرحلة عابرة — هاذي طريقة خدمتك. كل مهارة تربح مالها بطريقتها، وكلهم مع بعضهم يكوّنوا مسار متنوع، موش مهنة وحدة.",
+          planB:"إذا خدمة على كل النشاطات تتعبك أكثر ما يربحوك، ما توقفش الكل — جمع. اختار النشاط ولا الزوز لي عندهم أكثر تقدم وخلي الباقي يهدا لمدة (تولي قريب لأينشتاين)، بدل ما تتوزع على الكل بلا حدود.",
+          warnings:[ "نشاط وحيد يدعم الباقي ماليا من مدة طويلة، بلا أي علامة إن الباقي يلحقوا.", "تتعب برشا من التبديل بين النشاطات لدرجة ما تقدرش تخدم بمستوى مليح في أي وحدة منهم.", "وقفت تروج لنشاطين ولا أكثر بصمت لقلة الوقت — وما لاحظتش إلا توة." ] },
+        einstein: { name:"أينشتاين", desc:"تحب نقطة ثابتة تعتمد عليها — مصدر مدخول يغطي مصاريفك بلا مشاكل — باش كل حاجة أخرى تستكشفها تبقى بلا ضغط مادي. الاستقرار هو لي يخليك تقدر تكتشف.",
+          planB:"إذا النقطة الثابتة متاعك ولات غير مستقرة — تسريح، إرهاق، سوق يتناقص — ما تهرولش لنقطة ثابتة جديدة بسرعة. اعتمد على المهارات الجانبية لي بنيتهم وحول زوز ولا ثلاثة منهم لمداخيل صغيرة متوازية (تولي قريب لمتعدد الأدوار) لحد ما تلقى أرضية ثابتة مرة أخرى.",
+          warnings:[ "الساعات المحجوزة للمشروع الجانبي اختفت من شهرين ولا أكثر.", "تحقد على الخدمة الثابتة، ولكن ما تبنى حتى حاجة في الوقت الحر لي كان لازم يمولو.", "المشروع الجانبي متاعك \u201Cتقريبا حاضر للتجربة\u201D من ستة أشهر ولا أكثر." ] },
+        phoenix: { name:"العنقاء", desc:"تدخل في الحاجة بالكل. توّلي حاجة وحدة بالكامل، وبعد توّلي لي بعدها بالكامل — فصل يسكر قبل ما يبدا الآخر. هاذي موش عدم ثبات. هاذي طريقتك باش تكمل الحاجات فعلا.",
+          planB:"إذا الانغماس الكامل في الفصل الحالي ماهوش قادر يتحمل ماليا، ما يلزمكش تتخلى عليه — خفف الحمل برك. خذ مصدر مدخول ثابت وما يحتاجش مجهود كبير بجانبو (تولي قريب لأينشتاين) باش الفصل يقدر يكمل بلا ما يوقف قبل وقتو.",
+          warnings:[ "تقعد في هاذا الفصل بسبب الذنب ولا الاستثمار السابق، موش بسبب الفضول.", "تخاف تبدا نهار الخدمة أكثر من مرة.", "تعيش ذهنيا في الفصل الجاي، ولكن ما تقبلش إن هاذا وصل لآخرو." ] }
+      },
+      ideas: {
+        groupHug: (a,b) => `عرض ${a} × ${b} — حاجة ما كانتش تكون موجودة لو عملت وحدة منهم برك.`,
+        groupHugEmpty: "زيد شوية مهارات فوق باش تشوف أفكار دمج دقيقة هنا.",
+        slash: sk => `${sk} ← طريقها الخاص: خدمة فريلانس، ورشة مدفوعة، ولا منتج رقمي صغير، يخدم لوحدو بعيد على الباقي.`,
+        einstein: list => [ `من بين ${list} — شنوة لي تحس بيه أكثر استقرار كمدخول توة؟ هاذيكا تولي النقطة الثابتة متاعك.`, `أعتبر الباقي مخبر تجارب: ساعات محجوزة، بلا ضغط باش يربحوا توة.`, `أكتب أقل مبلغ شهري لازم النقطة الثابتة تغطيه — معرفة هاذا الرقم تنقص برشا من القلق وقتلي تاخذ قرارات بعدين.` ],
+        phoenix: list => [ `رتب ${list} حسب شنوة لي تحس بيه أكثر حياة توة — موش الأكثر عملية.`, `لي يطلع الأول هو الفصل الحالي متاعك. عطيه كامل اهتمامك قبل ما تخلط معاه لي بعدو.`, `احكي على هاذا الفصل بصوت عالي لواحد. الحكي عادة يخلي الالتزام أصدق من مجرد قرار في بالك.` ]
+      },
+      roadmaps: {
+        groupHug: [ ["30 يوم","أكتب كل المهارات لي زدتهم، وبعد دور على الزوز ولا الثلاثة لي تكون مبسوط تخدم بيهم كل جمعة. ارسم عرض وحيد يحتاجهم الكل في نفس الوقت."], ["60 يوم","ابني أصغر نسخة من هاذا العرض — ورشة وحدة، دفعة منتج وحدة، مشروع عميل وحيد. الهدف موش التوسع توة، الهدف تثبت أن الدمج يخدم فعلا."], ["90 يوم","سمّي العرض وحط فيه سعر بصفة علنية. العرض المجمع لازمو اسم الناس يقدروا يحكيوا بيه — بلاش هكا، باش يبقاو يسألوك شنوة تخدم بالضبط."], ["6 أشهر","رجع شوف الاسم، السعر، وشكون لي يشري فعلا. بدل ولا احذف المهارة لي ماعادتش تساهم في العرض، ودور على عرض مجمع ثاني مخبي في لي تعلمتو لحد توة."] ],
+        slash: [ ["30 يوم","أعتبر كل مهارة بزنس صغير لوحدها. أكتب جملة وحدة لكل مهارة: شكون يخلص فيها، وكيفاش."], ["60 يوم","اختار الزوز نشاطات لي أقرب باش يربحوا توة. حضر أقل حاجة تلزمك باش تقبل عميل ولا بيع — عرض بسيط، تسعيرة، طريقة باش يلقاوك."], ["90 يوم","ابني روتين أسبوعي يحمي وقت لكل نشاط. الخطر هنا موش نقص المدخول — الخطر أن نشاط وحيد ياكل الباقي بالتدريج."], ["6 أشهر","شوف الأرقام الحقيقية لكل نشاط، موش غير الطاقة. وقف ولا اهدا النشاط لي ياخذ وقت أكثر ما يرجع، واستثمر هاذا الوقت في الأقوى."] ],
+        einstein: [ ["30 يوم","حدد شنوة المهارة لي أقرب لمدخول ثابت ومتوقع توة. هاذيكا تولي النقطة الثابتة متاعك — موش بالضرورة لي تحبها أكثر، غير لي أكثر استقرار."], ["60 يوم","احجز ساعات ثابتة، ما تتنازلش فيها، كل جمعة لكل لي تبقى، تمولها بالكامل من النقطة الثابتة. بلا ضغط باش تربح توة."], ["90 يوم","خلي نشاط جانبي وحيد يولي مهني بالقدر الكافي باش ياخذ أول تجربة دفع صغيرة — بلاش يأثر على وقت ولا مدخول النقطة الثابتة."], ["6 أشهر","رجع شوف إذا النقطة الثابتة مازالت صحيحة — ولا وحدة من المشاريع الجانبية ولات مستقرة بالقدر الكافي باش تعاود توازن الوضعية."] ],
+        phoenix: [ ["30 يوم","رتب مهاراتك حسب شنوة لي تحس بيه أكثر حياة توة. لي يطلع الأول هو الفصل الحالي متاعك."], ["60 يوم","ادخل فيه بالكل. وقف الاستثمار الفعلي في الباقي — باش يبقاو موجودين. العمق أهم من التوازن توة."], ["90 يوم","حط نقطة مراجعة طبيعية — موش deadline — باش تسأل روحك إذا الفصل هذا مازال فيه حاجة تعطيها، ولا لي بعدو يناديك."], ["6 أشهر","اعمل التشيك تحت بصراحة. إذا الفصل هذا مازال يحس بالحياة، كمل بلا ما تعتذر. إذا لا، ابدا دور على الجاي قبل ما تسكر الباب بالكل."] ]
+      },
+      questions: [
+        { text:"كيفاش تحس بالنسبة للمهارات والحاجات لي تحب فيهم؟", options:[ "نحب نجمعهم في مشروع وحيد يستعملهم الكل.", "نحب يكون عندي عدة حاجات منفصلة نخدم فيهم في نفس الوقت.", "نحب حاجة وحدة ثابتة، ونلقى وقت نكتشف حاجات أخرى بجانبها.", "نحب نغوص بالكل في حاجة وحدة، وبعد نعدي للي بعدها." ] },
+        { text:"قداش تقعد متعلق بحاجة وحدة قبل ما تحب تبدل؟", options:[ "سنين — نغوص فيها بالكل ونقعد.", "شهور، وبعد نحب تنويع.", "عادة نخدم في عدة حاجات في نفس الوقت من البداية.", "ما دامت تبقى متداخلة مع الحاجات الأخرى لي تهمني." ] },
+        { text:"شنوة معناها الاستقرار المادي بالنسبة ليك توة؟", options:[ "ضروري — لازمني مصدر مدخول ثابت ونقدر نعتمد عليه.", "مليح كان موجود، ماهوش ضروري — نقدر نتحمل شوية تذبذب.", "نقدر نضحي بشوية استقرار باش نغوص بالكل في لي نحبو توة.", "نحب المدخول متاعي يجي من تجميع كل الحاجات لي نحبهم." ] },
+        { text:"كيفاش تحس بالنسبة لخدمة على عدة مداخيل في نفس الوقت؟", options:[ "يعطيني طاقة — نحب التنويع.", "يتعبني — نفضل نركز في حاجة وحدة.", "ماشي مشكل، ما دامت كلها مرتبطة بهوية وحدة أساسية.", "يتوقف بالكل على المرحلة لي فيها في حياتي." ] },
+        { text:"تخيل نهار خدمة مثالي بالنسبة ليك. يكون...", options:[ "مشروع وحيد عميق، من غير ما تنقطع فيه.", "عدة مهارات مختلفة متداخلة في نفس الخدمة.", "خدمة منظمة، وبجانبها وقت محجوز لمشروع تحبو.", "تبدل بين أدوار ولا عملاء مختلفين طول النهار." ] },
+        { text:"كي تتخيل مسارك المهني بعد خمس سنين...", options:[ "يكون مختلف بالكل — نكون بدلت برشا حاجات.", "تبقى نفس القاعدة، غير أعمق.", "تبقى خليط من عدة حاجات.", "تبقى حاجة وحدة موحدة، مبنية من تجميع لي نعملو توة." ] },
+        { text:"قداش يهمك يكون عندك \u201Cتسمية\u201D مهنية وحدة واضحة؟", options:[ "ما يهمنيش — ما عنديش مشكل نكون صعيب التصنيف.", "شوية — نحب يكون عندي على الأقل نقطة ثابتة وحدة.", "يهمني برشا — نفضل هوية وحدة واضحة في كل مرحلة، حتى لو تبدل مع الوقت." ] },
+        { text:"كيفاش توة تمول المشاريع لي تحبهم ولا الاهتمامات الجانبية متاعك؟", options:[ "خدمة ثابتة تغطي كل شيء؛ المشاريع الجانبية ماعندهاش مدخول توة.", "كل اهتمام يمول روحو لوحدو، منفصل.", "ماهمش منفصلين — كلهم جزء من عرض وحيد مدفوع.", "نلتزم ماليا بالكل في لي نخدم فيه توة." ] },
+        { text:"كيفاش تحس بالنسبة للتذبذب في المدخول؟", options:[ "ما نتحملوش برشا — نحب الاستقرار وتوقع المدخول.", "متوسط — شوية تذبذب ماعندوش مشكل إذا كنت نحب الخدمة.", "نتحمل برشا — نلقى الحل وقتلي نمشي قدام.", "ما ينطبقش برشا — العرض المجمع متاعي يخلق استقرار من روحو." ] },
+        { text:"شنوة الجملة لي تشبهك أكثر؟", options:[ "\u00ABنحب نبني حاجة وحدة تستعمل كل لي فيا.\u00BB", "\u00ABنحب مسار مهني متنوع — عدة أدوار في نفس الوقت.\u00BB", "\u00ABنحب الأمان أولا، والحرية بجانبو.\u00BB", "\u00ABنحب نولي بالكل كل حاجة، وحدة بوحدة.\u00BB" ] }
+      ]
+    }
+  };
+
+  // ---------- state ----------
+  let currentLang = 'en';
+  let currentIndex = 0;
+  let steps = [];
+  let skills = [];
+  let selectedAnswers = new Array(QUESTION_SCORES.length).fill(null);
+  let checkinState = new Array(8).fill(false);
+
+  const stage = document.getElementById('stage');
+  const resultsStep = document.getElementById('resultsStep');
+  const progressFill = document.getElementById('progressFill');
+  const skillInput = document.getElementById('skillInput');
+  const tagContainer = document.getElementById('tagContainer');
+  const skillHint = document.getElementById('skillHint');
+  const skillsNextBtn = document.getElementById('skillsNextBtn');
+
+  // ---------- step navigation ----------
+  function rebuildStepsArray(){ steps = Array.from(document.querySelectorAll('.step')); }
+
+  function showStep(i){
+    steps.forEach(s => s.classList.remove('active'));
+    steps[i].classList.add('active');
+    progressFill.style.width = (i / (steps.length - 1) * 100) + '%';
+    currentIndex = i;
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  document.getElementById('startBtn').addEventListener('click', () => showStep(currentIndex + 1));
+  document.addEventListener('click', e => {
+    if (e.target.matches('[data-back]')) showStep(Math.max(0, currentIndex - 1));
+  });
+
+  // ---------- skills step ----------
+  function renderTags(){
+    tagContainer.innerHTML = '';
+    skills.forEach((s, i) => {
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.innerHTML = `${s} <button aria-label="remove">&times;</button>`;
+      tag.querySelector('button').addEventListener('click', () => { skills.splice(i,1); renderTags(); });
+      tagContainer.appendChild(tag);
+    });
+    const ui = T[currentLang].ui;
+    skillHint.textContent = skills.length >= 3 ? ui.skillsHintReady(skills.length) : ui.skillsHintEmpty(skills.length);
+    skillsNextBtn.disabled = skills.length < 3;
+  }
+
+  function addSkillFromInput(){
+    const v = skillInput.value.trim();
+    if (v && !skills.includes(v)) { skills.push(v); renderTags(); }
+    skillInput.value = '';
+  }
+
+  document.getElementById('addSkillBtn').addEventListener('click', addSkillFromInput);
+  skillInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkillFromInput(); }
+  });
+  skillsNextBtn.addEventListener('click', () => showStep(currentIndex + 1));
+
+  // ---------- quiz build ----------
+  function attachOptionHandlers(){
+    document.querySelectorAll('.option-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const input = row.querySelector('input[type=radio]');
+        input.checked = true;
+        const qi = parseInt(row.closest('.step').dataset.qIndex, 10);
+        const oi = parseInt(row.dataset.oi, 10);
+        selectedAnswers[qi] = oi;
+        row.parentElement.querySelectorAll('.option-row').forEach(s => s.classList.remove('selected'));
+        row.classList.add('selected');
+      });
+    });
+  }
+
+  function attachQuizNextHandlers(){
+    document.querySelectorAll('[data-quiz-next]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.card');
+        const checked = card.querySelector('input[type=radio]:checked');
+        if (!checked) {
+          card.classList.add('shake');
+          setTimeout(() => card.classList.remove('shake'), 350);
+          return;
+        }
+        if (currentIndex + 1 === steps.length - 1) renderResults();
+        showStep(currentIndex + 1);
+      });
+    });
+  }
+
+  function rebuildQuizSteps(){
+    document.querySelectorAll('.step[data-q-index]').forEach(el => el.remove());
+    const qs = T[currentLang].questions;
+    const ui = T[currentLang].ui;
+    qs.forEach((q, qi) => {
+      const section = document.createElement('section');
+      section.className = 'step';
+      section.dataset.qIndex = qi;
+      let optionsHtml = '';
+      q.options.forEach((label, oi) => {
+        const sel = selectedAnswers[qi] === oi;
+        optionsHtml += `
+          <div class="option-row${sel ? ' selected' : ''}" data-oi="${oi}">
+            <input type="radio" name="q${qi}" id="q${qi}o${oi}" value="${oi}" ${sel ? 'checked' : ''}>
+            <label for="q${qi}o${oi}">${label}</label>
+          </div>`;
+      });
+      section.innerHTML = `
+        <div class="card">
+          <p class="q-counter">${ui.qCounter(qi, qs.length)}</p>
+          <h2 class="step-title">${q.text}</h2>
+          <div style="margin-top:1.2rem;">${optionsHtml}</div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" data-back>${ui.back}</button>
+            <button class="btn btn-primary" data-quiz-next>${ui.continueBtn}</button>
+          </div>
+        </div>`;
+      stage.insertBefore(section, resultsStep);
+    });
+    attachOptionHandlers();
+    attachQuizNextHandlers();
+    rebuildStepsArray();
+  }
+
+  // ---------- scoring ----------
+  function computeScores(){
+    const totals = {groupHug:0, slash:0, einstein:0, phoenix:0};
+    selectedAnswers.forEach((oi, qi) => {
+      if (oi === null) return;
+      const sc = QUESTION_SCORES[qi][oi];
+      Object.entries(sc).forEach(([k,v]) => { totals[k] += v; });
+    });
+    return totals;
+  }
+
+  function generateIdeas(key, skillList){
+    const ideasT = T[currentLang].ideas;
+    const s = skillList.length ? skillList : null;
+    if (key === 'groupHug') {
+      if (!s) return [ideasT.groupHugEmpty];
+      const out = [];
+      for (let i = 0; i < Math.min(3, s.length); i++) {
+        const a = s[i], b = s[(i+1) % s.length];
+        if (a !== b) out.push(ideasT.groupHug(a,b));
+      }
+      return out.length ? out : [ideasT.groupHugEmpty];
+    }
+    const list = s || ['—'];
+    if (key === 'slash') return list.slice(0,5).map(sk => ideasT.slash(sk));
+    if (key === 'einstein') return ideasT.einstein(list.join(', '));
+    return ideasT.phoenix(list.join(', '));
+  }
+
+  function renderResults(){
+    const totals = computeScores();
+    const total = Object.values(totals).reduce((a,b)=>a+b,0) || 1;
+    const pct = {};
+    Object.keys(totals).forEach(k => pct[k] = Math.round(totals[k]/total*100));
+
+    const sorted = Object.keys(pct).sort((a,b) => pct[b]-pct[a]);
+    const primary = sorted[0], secondary = sorted[1];
+    const isBlend = (pct[primary] - pct[secondary]) <= 10;
+
+    const conic = sorted.map((k,i) => {
+      const cumBefore = sorted.slice(0,i).reduce((acc,kk)=>acc+pct[kk],0);
+      return `${ARCHETYPE_COLORS[k]} ${cumBefore}% ${cumBefore+pct[k]}%`;
+    }).join(', ');
+
+    const barSegments = ARCHETYPE_ORDER.map(k => `<div style="width:${pct[k]}%; background:${ARCHETYPE_COLORS[k]};"></div>`).join('');
+    const T_lang = T[currentLang];
+    const legend = ARCHETYPE_ORDER.map(k =>
+      `<div class="legend-item"><span class="legend-dot" style="background:${ARCHETYPE_COLORS[k]}"></span>${T_lang.archetypes[k].name} — ${pct[k]}%</div>`
+    ).join('');
+
+    const ideas = generateIdeas(primary, skills);
+    const ideaHtml = ideas.map(i => `<li>${i}</li>`).join('');
+    const roadmapHtml = T_lang.roadmaps[primary].map(([label,text]) => `<li><span>${label}</span>${text}</li>`).join('');
+    const warningHtml = T_lang.archetypes[primary].warnings.map(w => `<li>${w}</li>`).join('');
+    const blendNote = isBlend ? `<p class="archetype-desc">${T_lang.ui.blendNote(T_lang.archetypes[secondary].name)}</p>` : '';
+    const ui = T_lang.ui;
+    const checkinHtml = ui.checkinItems.map((item,i) => `
+      <label class="checkin-item">
+        <input type="checkbox" data-ci="${i}" ${checkinState[i] ? 'checked' : ''}>
+        <span>${item}</span>
+      </label>`).join('');
+
+    document.getElementById('resultsCard').innerHTML = `
+      <span class="mono-tag" style="text-align:center; display:block;">${ui.shapeTag}</span>
+      <div class="orb-wrap"><div class="orb" style="background: conic-gradient(${conic});"></div></div>
+      <div class="blend-bar">${barSegments}</div>
+      <div class="blend-legend">${legend}</div>
+      <h2 class="archetype-name">${T_lang.archetypes[primary].name}</h2>
+      <p class="archetype-pct">${pct[primary]}${ui.matchSuffix}</p>
+      <p class="archetype-desc">${T_lang.archetypes[primary].desc}</p>
+      ${blendNote}
+      <div class="section-block">
+        <h3>${ui.ideasHeader}</h3>
+        <ul class="idea-list">${ideaHtml}</ul>
+      </div>
+      <div class="section-block">
+        <h3>${ui.roadmapHeader}</h3>
+        <ul class="roadmap-list">${roadmapHtml}</ul>
+      </div>
+      <div class="section-block">
+        <h3>${ui.planBHeader}</h3>
+        <div class="planb-box">${T_lang.archetypes[primary].planB}</div>
+      </div>
+      <div class="section-block">
+        <h3>${ui.warningHeader}</h3>
+        <ul class="warning-list">${warningHtml}</ul>
+      </div>
+      <div class="section-block">
+        <h3>${ui.checkinHeader}</h3>
+        <p class="step-copy" style="margin-bottom:1rem;">${ui.checkinIntro}</p>
+        <div class="checkin-list">${checkinHtml}</div>
+        <p class="checkin-readout" id="checkinReadout"></p>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="restartBtn">${ui.restart}</button>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button class="btn btn-ghost" id="saveBtn">${ui.saveBtn}</button>
+          <button class="btn btn-primary" id="printBtn">${ui.print}</button>
+        </div>
+      </div>`;
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      skills = [];
+      renderTags();
+      selectedAnswers = new Array(QUESTION_SCORES.length).fill(null);
+      checkinState = new Array(8).fill(false);
+      rebuildQuizSteps();
+      showStep(0);
+    });
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+    document.getElementById('saveBtn').addEventListener('click', () => downloadPlan(primary, pct));
+
+    document.querySelectorAll('[data-ci]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        checkinState[parseInt(cb.dataset.ci, 10)] = cb.checked;
+        updateCheckinReadout();
+      });
+    });
+    updateCheckinReadout();
+  }
+
+  function updateCheckinReadout(){
+    const ui = T[currentLang].ui;
+    const count = checkinState.filter(Boolean).length;
+    let msg, tier;
+    if (count <= 2) { msg = ui.checkinLow; tier = 'low'; }
+    else if (count <= 5) { msg = ui.checkinMid; tier = 'mid'; }
+    else { msg = ui.checkinHigh; tier = 'high'; }
+    const el = document.getElementById('checkinReadout');
+    if (el) {
+      el.textContent = `${ui.checkinCount(count)} — ${msg}`;
+      el.className = 'checkin-readout tier-' + tier;
+    }
+  }
+
+  function downloadPlan(primary, pct){
+    const T_lang = T[currentLang];
+    const ui = T_lang.ui;
+    const arche = T_lang.archetypes[primary];
+    const ideas = generateIdeas(primary, skills);
+    const roadmap = T_lang.roadmaps[primary];
+    const lines = [];
+    lines.push('MULTITUDES — ' + ui.shapeTag);
+    lines.push('');
+    lines.push(arche.name + ' — ' + pct[primary] + ui.matchSuffix);
+    lines.push(arche.desc);
+    lines.push('');
+    lines.push(ui.ideasHeader + ':');
+    ideas.forEach(i => lines.push('- ' + i));
+    lines.push('');
+    lines.push(ui.roadmapHeader + ':');
+    roadmap.forEach(([label, text]) => lines.push(label + ' — ' + text));
+    lines.push('');
+    lines.push(ui.planBHeader + ':');
+    lines.push(arche.planB);
+    lines.push('');
+    lines.push(ui.warningHeader + ':');
+    arche.warnings.forEach(w => lines.push('- ' + w));
+    const text = lines.join('\n');
+
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'multitudes-plan.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // ---------- static text + language switching ----------
+  function applyStaticText(){
+    const ui = T[currentLang].ui;
+    document.getElementById('eyebrow').textContent = ui.eyebrow;
+    document.getElementById('subtitle').textContent = ui.subtitle;
+    document.getElementById('introTag').textContent = ui.introTag;
+    document.getElementById('introTitle').textContent = ui.introTitle;
+    document.getElementById('introP1').textContent = ui.introP1;
+    document.getElementById('introP2').textContent = ui.introP2;
+    document.getElementById('startBtn').textContent = ui.introBegin;
+    document.getElementById('skillsTag').textContent = ui.skillsTag;
+    document.getElementById('skillsTitle').textContent = ui.skillsTitle;
+    document.getElementById('skillsCopy').textContent = ui.skillsCopy;
+    skillInput.placeholder = ui.skillsPlaceholder;
+    document.getElementById('addSkillBtn').textContent = ui.skillsAdd;
+    document.getElementById('skillsBackBtn').textContent = ui.back;
+    skillsNextBtn.textContent = ui.continueBtn;
+    document.getElementById('footerText').innerHTML = ui.footer;
+  }
+
+  function setLang(lang){
+    currentLang = lang;
+    document.documentElement.setAttribute('lang', lang === 'tn' ? 'ar' : lang);
+    document.documentElement.setAttribute('dir', lang === 'tn' ? 'rtl' : 'ltr');
+    document.body.classList.toggle('lang-tn', lang === 'tn');
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    applyStaticText();
+    rebuildQuizSteps();
+    renderTags();
+    steps.forEach(s => s.classList.remove('active'));
+    if (steps[currentIndex]) steps[currentIndex].classList.add('active');
+    if (currentIndex === steps.length - 1) renderResults();
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+
+  // ---------- init ----------
+  setLang('en');
+  rebuildStepsArray();
+  showStep(0);
+</script>
+</body>
+</html>
